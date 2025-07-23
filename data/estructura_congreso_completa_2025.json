@@ -1,0 +1,161 @@
+{
+    "alianzas": {
+        "Alianza La Libertad Avanza": {
+            "color": "#4B0082",
+            "partidos": [
+                "PRO",
+                "LLA"
+            ],
+            "secciones": "Todas"
+        },
+        "Alianza Fuerza Patria": {
+            "color": "#202CB3DD",
+            "partidos": [
+                "UxP"
+            ],
+            "secciones": "Todas"
+        },
+        "Alianza Somos Buenos Aires": {
+            "color": "#C90000E3",
+            "partidos": [
+                "UCR",
+                "Coalición cívica",
+                "UCR + Cambio Federal",
+                "Acuerdo cívico - UCR + Gen"
+            ],
+            "secciones": "Capital, Primera, Tercera, Cuarta, Quinta, Sexta, Séptima"
+        },
+        "Unión renovación y fe": {
+            "color": "#5D077A",
+            "partidos": [
+                "Unión renovación y fe"
+            ],
+            "secciones": null
+        },
+        "Alianza Unión y Libertad": {
+            "color": "#6A0DAD",
+            "partidos": [
+                "UNIÓN Y LIBERTAD"
+            ],
+            "secciones": "Todas"
+        },
+        "Alianza FIT-U": {
+            "color": "#FF0000",
+            "partidos": [
+                "PTS-Frente de Izquierda Unidad"
+            ],
+            "secciones": "Todas"
+        },
+        "Alianza Unión Liberal": {
+            "color": "#8A2BE2",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Alianza es con Vos es con Nosotros": {
+            "color": "#202a96dd",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Alianza Nuevos Aires": {
+            "color": "#5d077af4",
+            "partidos": [],
+            "secciones": "Capital, Primera, Tercera, Cuarta"
+        },
+        "Alianza Potencia": {
+            "color": "#ffff00dd",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Construyendo Porvenir": {
+            "color": "#FF5733",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Espacio Abierto para el Desarrollo y la Integración Social": {
+            "color": "#FF8C00",
+            "partidos": [],
+            "secciones": "Capital, Segunda"
+        },
+        "Partido del Trabajo y la Equidad": {
+            "color": "#FF4500",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Partido Frente Patriota Federal": {
+            "color": "#FF6347",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Partido Libertario": {
+            "color": "#FFD700",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Partido Movimiento Avanzada Socialista": {
+            "color": "#32CD32",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Partido Política Obrera": {
+            "color": "#000000",
+            "partidos": [],
+            "secciones": "Capital, Primera, Segunda, Tercera, Cuarta, Quinta, Sexta"
+        },
+        "Partido Tiempo de Todos": {
+            "color": "#8B0000",
+            "partidos": [],
+            "secciones": "Todas"
+        },
+        "Valores Republicanos": {
+            "color": "#FFD700",
+            "partidos": [],
+            "secciones": "Todas"
+        }
+    },
+    "padron": {
+        "Capital": 576691,
+        "Primera": 4732831,
+        "Segunda": 649465,
+        "Tercera": 4637863,
+        "Cuarta": 540354,
+        "Quinta": 1290948,
+        "Sexta": 652077,
+        "Séptima": 281130
+    },
+    "bancas_por_seccion": {
+        "diputados": {
+            "Capital": 6,
+            "Primera": 16,
+            "Segunda": 11,
+            "Tercera": 18,
+            "Cuarta": 13,
+            "Quinta": 11,
+            "Sexta": 11,
+            "Séptima": 6
+        },
+        "senadores": {
+            "Capital": 3,
+            "Primera": 8,
+            "Segunda": 5,
+            "Tercera": 9,
+            "Cuarta": 7,
+            "Quinta": 5,
+            "Sexta": 6,
+            "Séptima": 3
+        },
+        "a_elegir_2025": {
+            "diputados": {
+                "Capital": 6,
+                "Segunda": 11,
+                "Tercera": 18,
+                "Sexta": 11
+            },
+            "senadores": {
+                "Primera": 8,
+                "Cuarta": 7,
+                "Quinta": 5,
+                "Séptima": 3
+            }
+        }
+    }
+}
