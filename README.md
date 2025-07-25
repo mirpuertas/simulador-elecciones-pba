@@ -1,145 +1,78 @@
 # 🗳️ Simulador Electoral PBA 2025
 
-Una aplicación web interactiva para simular las elecciones legislativas de la Provincia de Buenos Aires 2025, utilizando el sistema D'Hondt y simulaciones Monte Carlo.
+App interactiva para simular elecciones legislativas en la Provincia de Buenos Aires, utilizando el sistema de cociente Hare con distribución por residuos. Permite definir intención de voto por sección electoral, ejecutar simulaciones y visualizar los resultados de forma clara e interactiva.
 
-## 🚀 Características
+## Funcionalidades
 
-- **Simulación Probabilística**: Utiliza distribuciones Dirichlet para modelar la incertidumbre electoral
-- **Sistema D'Hondt**: Implementa el sistema electoral oficial de Argentina
-- **Datos Reales**: Basado en padrón electoral actualizado y estructura legislativa actual
-- **Visualizaciones Interactivas**: Gráficos de distribución, diagramas de parlamento y tablas resumen
-- **Configuración Flexible**: Ajusta participación, intención de voto y parámetros de simulación
+- **Asignación de bancas** por cociente electoral (Hare) + residuos
+- Modo **determinista** (asignación exacta) y **Monte Carlo** (simulación aleatoria)
+- Definición de intención de voto por sección electoral
+- Mapa interactivo con actualización por sección
+- Modo avanzado: edición detallada por sección (sliders)
+- Visualización de resultados en mapas, gráficos y tablas
+- Arquitectura **modular y escalable** para otras elecciones (ej. 2027)
 
-## 📋 Requisitos
+## Estructura del proyecto
 
-- Python 3.8 o superior
-- pip (gestor de paquetes de Python)
-
-## 🛠️ Instalación
-
-1. **Clona o descarga este repositorio**
-
-2. **Instala las dependencias**:
-   ```bash
-   pip install -r requirements.txt
    ```
-
-## 🎯 Uso
-
-1. **Ejecuta la aplicación**:
-   ```bash
-   streamlit run app.py
+├── app.py # Frontend en Streamlit
+├── config.ini # Año de elección y parámetros generales
+├── data/
+│ ├── estructura_congreso_completa_2025.json
+│ └── congreso_composicion_inicial_2025.csv
+│ └── secciones_pba.geojson # Mapa de secciones electorales
+├── utils/
+│ ├── congreso.py # Composición actual y mapeo de alianzas
+│ ├── loader.py # Carga de archivos por año
+│ └── reglas_electorales.py # Reglas de reparto, simulación y resumen
+│ └── simulacion.py
+│ └── geotools.py
+│ └── plots.py
    ```
+## Acceder a la versión Online 2025
 
-2. **Abre tu navegador** en la dirección que aparece (generalmente `http://localhost:8501`)
+Simulador
 
-3. **Configura los parámetros** en la barra lateral:
-   - Participación electoral
-   - Porcentaje de votos válidos  
-   - Intención de voto por partido
-   - Número de simulaciones Monte Carlo
+## Cómo ejecutar
 
-4. **Haz clic en "🚀 Ejecutar Simulación"** para generar los resultados
-
-## 📊 Funcionalidades
-
-### Parámetros Configurables
-
-- **Participación Electoral**: Porcentaje del padrón que vota (40-85%)
-- **Votos Válidos**: Porcentaje de votos no nulos (80-98%)
-- **Intención de Voto**: Distribución porcentual entre los 5 principales espacios políticos
-- **Simulaciones Monte Carlo**: Número de corridas (100-2000)
-- **Parámetros Técnicos**: Escala Alpha y Phi Jerárquico para el modelo Dirichlet
-
-### Resultados Generados
-
-1. **Resumen Ejecutivo**: Medidas de tendencia central y intervalos de confianza
-2. **Distribuciones de Probabilidad**: Gráficos KDE de las simulaciones
-3. **Diagramas de Parlamento**: Visualización semicircular de la composición legislativa
-4. **Detalles Técnicos**: Parámetros utilizados y estadísticas del modelo
-
-## 🏛️ Cámaras Simuladas
-
-### Cámara de Diputados
-- **Secciones que votan**: Capital, Segunda, Tercera, Sexta
-- **Bancas en juego**: 46 de 92 totales
-- **Sistema**: D'Hondt con umbral implícito
-
-### Senado Provincial  
-- **Secciones que votan**: Primera, Cuarta, Quinta, Séptima
-- **Bancas en juego**: 23 de 46 totales
-- **Sistema**: D'Hondt con umbral implícito
-
-## 🎲 Metodología
-
-### Modelo Electoral
-
-1. **Base Probabilística**: Cada simulación genera proporción de votos usando distribución Dirichlet
-2. **Conversión a Votos**: Aplica participación y validez para calcular votos absolutos
-3. **Reparto de Bancas**: Usa algoritmo D'Hondt oficial (con manejo del Art. 110)
-4. **Agregación**: Suma bancas no renovadas de elecciones anteriores
-
-### Espacios Políticos
-
-- **Alianza La Libertad Avanza**: PRO + LLA
-- **Fuerza Patria**: Unión por la Patria  
-- **Somos Buenos Aires**: UCR + PJ no kirchnerista
-- **Avanza Libertad**: Libertarios disidentes
-- **FIT-U**: Frente de Izquierda
-
-## 📈 Interpretación de Resultados
-
-- **Media**: Valor esperado de bancas por partido
-- **P5/P95**: Intervalo de confianza del 90%
-- **Medoid**: Resultado más representativo (mínima distancia a todas las simulaciones)
-- **Densidad**: Probabilidad relativa de cada cantidad de bancas
-
-## ⚠️ Limitaciones
-
-- No considera efectos de campaña o eventos no previstos
-- Asume distribución homogénea dentro de cada sección
-- Parámetros basados en tendencias históricas y encuestas disponibles
-- No incluye listas locales o candidaturas testimoniales
-
-## 🔧 Desarrollo
-
-### Estructura del Código
+### 1. Instalar dependencias
 
 ```
-app.py              # Aplicación principal Streamlit
-requirements.txt    # Dependencias Python
-README.md          # Documentación
-analisis/
-  └── calculo.ipynb # Notebook original con análisis exploratorio
+pip install -r requirements.txt
 ```
 
-### Librerías Principales
+### 2. Ejecuta la app
+```
+streamlit run app.py
+```
 
-- **streamlit**: Interface web interactiva
-- **pandas/numpy**: Manipulación de datos y cálculos
-- **scipy**: Distribuciones estadísticas
-- **geopandas**: Manejo de datos geoespaciales  
-- **matplotlib/plotly**: Visualizaciones
-- **poli-sci-kit**: Diagramas de parlamento
+### 3. Interfaz
 
-## 📄 Licencia
+- Elegí el año electoral
+- Seleccioná modo de simulación (determinista / Monte Carlo)
+- Definí la intención de voto por sección
+- Visualizá mapas, gráficos y resultados parlamentarios
 
-Este proyecto es de código abierto y está disponible bajo la licencia MIT.
+## Datos
 
-## 👥 Contribuciones
+- estructura_congreso_completa_<año>.json: define las bancas a renovar y alianzas participantes
 
-Las contribuciones son bienvenidas. Por favor:
+- congreso_composicion_inicial_<año>.csv: composición actual del congreso (usado para mostrar cambios)
 
-1. Fork el repositorio
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
-5. Abre un Pull Request
+- secciones_pba.geojson: mapa de secciones electorales
 
-## 📞 Contacto
+Podés simular nuevos escenarios actualizando los archivos de datos sin modificar el código.
 
-Para preguntas, sugerencias o reportes de bugs, por favor abre un issue en el repositorio.
+## Conceptos clave
 
----
+- Cociente electoral Hare: se divide el total de votos válidos por la cantidad de bancas; cada lista obtiene tantas bancas como veces contenga el cociente. Las bancas restantes se reparten según los residuos más altos.
+- Simulación Monte Carlo: genera resultados posibles a partir de distribuciones de probabilidad.
+- Modo determinista: asigna bancas directamente a partir de los porcentajes ingresados.
 
-*Desarrollado con usando Python y Streamlit* 
+## Licencia
+
+Este proyecto está bajo la licencia MIT. [Ver LICENSE.](https://github.com/mirpuertas/simulador-elecciones-pba/blob/main/LICENSE)
+
+## Autor
+
+Miguel Ignacio Rodríguez Puertas · [@mirpuertas](https://github.com/mirpuertas)
