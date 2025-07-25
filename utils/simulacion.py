@@ -1,8 +1,11 @@
+from __future__ import annotations
 import pandas as pd
 import numpy as np
 from scipy.spatial.distance import cdist
 from utils.reglas_electorales import repartir_bancas
+from typing import Callable, Mapping
 
+__all__ = ["simular_eleccion", "resumen", "medoid"]
 
 def simular_eleccion(dirichlet_pesos, data, participacion, votos_validos_pct, phi=None):
     """Simula una elección usando distribuciones Dirichlet"""

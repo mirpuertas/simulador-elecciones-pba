@@ -2,19 +2,6 @@ import json
 import pandas as pd
 from collections import defaultdict
 
-# import matplotlib.colors as mcolors
-
-# def to_hex_rgb(color):
-#     """
-#     Convierte cualquier entrada (#RRGGBB, #RRGGBBAA, nombre, tupla) a #RRGGBB
-#     """
-#     try:
-#         rgba = mcolors.to_rgba(color)     # siempre da tupla (r,g,b,a)
-#         return mcolors.to_hex(rgba[:3])   # solo R,G,B
-#     except Exception as e:
-#         print(f"[Error color] No se pudo convertir {color} → {e}")
-#         return "#000000"  # fallback visible
-
 def nested_defaultdict_int():
     return defaultdict(int)
 
@@ -42,8 +29,6 @@ class Congreso:
 
     def _calcular_composicion(self, solo_no_renueva=False):
         resultado = {
-            # "diputados": defaultdict(lambda: defaultdict(int)),
-            # "senadores": defaultdict(lambda: defaultdict(int))
             "diputados": defaultdict(nested_defaultdict_int),
             "senadores": defaultdict(nested_defaultdict_int)
         }
@@ -60,18 +45,7 @@ class Congreso:
             resultado[camara_clave][seccion][alianza] += 1
 
         return resultado
-    
-    # def obtener_secciones_por_alianza(self) -> dict[str, set[str]]:
-    #     resultado = {}
-    #     padron_keys = set(self.estructura["padron"].keys())
-    #     for alianza, datos in self.estructura["alianzas"].items():
-    #         txt = datos.get("secciones", "Todas")
-    #         if txt.strip().lower() == "todas":
-    #             resultado[alianza] = padron_keys
-    #         else:
-    #             resultado[alianza] = set(map(str.strip, txt.split(",")))
-    #     return resultado
-    
+       
     def obtener_secciones_por_alianza(self) -> dict[str, set[str]]:
         resultado = {}
         padron_keys = set(self.estructura["padron"].keys())
@@ -95,13 +69,6 @@ class Congreso:
     def obtener_padron(self):
         return self.estructura["padron"]
     
-    # def obtener_colores_alianzas(self):
-    #     return {
-    #         nombre: to_hex_rgb(info["color"])
-    #         for nombre, info in self.estructura["alianzas"].items()
-    #     }
-
-
     def obtener_colores_alianzas(self):
         return {a: v["color"] for a, v in self.estructura["alianzas"].items()}
 

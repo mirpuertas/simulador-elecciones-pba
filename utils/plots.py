@@ -7,6 +7,8 @@ from scipy.stats import gaussian_kde
 
 from typing import Mapping
 
+from utils.geotools import obtener_centroides_seguros
+
 
 
 def crear_mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo, ax=None):
@@ -42,14 +44,16 @@ def crear_mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo,
         edgecolor='black',
         linewidth=0.5
     )
-    
+
+    # Preparar datos
+    centroides = obtener_centroides_seguros(gdf_plot)
     # Agregar anotaciones con números de bancas
     for idx, row in gdf_plot.iterrows():
         if row["bancas"] > 0:
-            centroid = row.geometry.centroid
+            centroide = centroides.iloc[idx]
             ax.annotate(
                 f'{int(row["bancas"])}',
-                (centroid.x, centroid.y),
+                (centroide.x, centroide.y),
                 ha='center', va='center',
                 fontsize=9, fontweight='bold',
                 color='white',
@@ -93,13 +97,15 @@ def crear_mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, 
         legend_kwds={'label': 'Ganancia de bancas', 'shrink': 0.8}
     )
     
+    # Preparar datos
+    centroides = obtener_centroides_seguros(gdf_plot)
     # Agregar anotaciones con números
     for idx, row in gdf_plot.iterrows():
         if abs(row["ganancia"]) > 0:
-            centroid = row.geometry.centroid
+            centroide = centroides.iloc[idx]
             ax.annotate(
                 f'{int(row["ganancia"]):+d}',
-                (centroid.x, centroid.y),
+                (centroide.x, centroide.y),
                 ha='center', va='center',
                 fontsize=8, fontweight='bold',
                 bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8)
@@ -146,13 +152,14 @@ def crear_mapa_ganadores(gdf_secciones, bancas_totales_df, colores_partidos, tit
                 linewidth=0.5
             )
     
+    centroides = obtener_centroides_seguros(gdf_plot)
     # Agregar anotaciones con números de bancas
     for idx, row in gdf_plot.iterrows():
         if row["max_bancas"] > 0:
-            centroid = row.geometry.centroid
+            centroide = centroides.iloc[idx]
             ax.annotate(
                 f'{int(row["max_bancas"])}',
-                (centroid.x, centroid.y),
+                (centroide.x, centroide.y),
                 ha='center', va='center',
                 fontsize=9, fontweight='bold',
                 color='white',
