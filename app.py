@@ -28,17 +28,14 @@ import pandas as pd
 import streamlit as st
 
 import geopandas as gpd
-from utils.reglas_electorales import repartir_bancas 
-from utils.loader import cargar_congreso
-from utils.simulacion import medoid, resumen, simular_eleccion 
-from utils import plots
+from utils import reglas_electorales, loader, simulacion, plots
 
 # ---------------------------------------------------------------------------
 # Carga de datos: el año vigente se lee de config.ini por defecto.
 # ---------------------------------------------------------------------------
 @st.cache_data(show_spinner=False)
 def build_context(alianzas_visibles: list[str]):
-    congreso = cargar_congreso(None)
+    congreso = loader.cargar_congreso(None)
 
     padron = congreso.obtener_padron()
     bancas = congreso.obtener_bancas_por_seccion()["a_elegir_2025"]
@@ -131,89 +128,69 @@ GDF_SECCIONES = load_geo()
 # ---------------------------------------------------------------------------
 # Funciones que dependen de Streamlit (se definen al final para claridad)
 # ---------------------------------------------------------------------------
+def _filas_para_camara(secciones, creencias_seccion, participacion, votos_validos):
+    filas = []
+    for seccion, cargos in secciones.items():
+        pad = PADRON_REAL[seccion]
+        validos = int(pad * participacion * votos_validos)
+        for alianza, pct in creencias_seccion(seccion).items():
+            filas.append(
+                dict(seccion=seccion, lista=alianza,
+                     votos=int(validos*pct/100), cargos=cargos)
+            )
+    return filas
 
 def calcular_determinista(
-    creencias: dict[str, int], participacion: float, votos_validos_pct: float
+    creencias: dict[str, int],
+    participacion: float,
+    votos_validos_pct: float
 ):
     """Reparte bancas de forma determinista (sin secciones específicas)."""
-    filas_dip, filas_sen = [], []
-
-    for seccion, cargos in SECCIONES_DIPUTADOS.items():
-        pad = PADRON_REAL[seccion]
-        total_validos = int(pad * participacion * votos_validos_pct)
-        creencias_norm = normalizar_creencias_para_seccion(creencias, seccion)
-        for alianza, pct in creencias_norm.items():
-            filas_dip.append(
-                {
-                    "seccion": seccion,
-                    "lista": alianza,
-                    "votos": int(total_validos * pct / 100),
-                    "cargos": cargos,
-                }
-            )
-
-    for seccion, cargos in SECCIONES_SENADORES.items():
-        pad = PADRON_REAL[seccion]
-        total_validos = int(pad * participacion * votos_validos_pct)
-        creencias_norm = normalizar_creencias_para_seccion(creencias, seccion)
-        for alianza, pct in creencias_norm.items():
-            filas_sen.append(
-                {
-                    "seccion": seccion,
-                    "lista": alianza,
-                    "votos": int(total_validos * pct / 100),
-                    "cargos": cargos,
-                }
-            )
-
-    dip = repartir_bancas(pd.DataFrame(filas_dip))
-    sen = repartir_bancas(pd.DataFrame(filas_sen))
     
-    return dip, sen
+    # Esta función aplica siempre la misma creencia global, filtrada por sección
+    def creencias_func(seccion):
+        return normalizar_creencias_para_seccion(creencias, seccion)
 
+    filas_dip = _filas_para_camara(SECCIONES_DIPUTADOS, creencias_func, participacion, votos_validos_pct)
+    filas_sen = _filas_para_camara(SECCIONES_SENADORES, creencias_func, participacion, votos_validos_pct)
+
+    dip = reglas_electorales.repartir_bancas(pd.DataFrame(filas_dip))
+    sen = reglas_electorales.repartir_bancas(pd.DataFrame(filas_sen))
+
+    return dip, sen
 
 def calcular_determinista_por_seccion(
-    creencias_sec: dict[str, dict[str, int]], participacion: float, votos_validos_pct: float
+    creencias_sec: dict[str, dict[str, int]],
+    participacion: float,
+    votos_validos_pct: float
 ):
     """Reparte bancas usando porcentajes distintos por sección."""
-    filas_dip, filas_sen = [], []
-
-    for seccion, cargos in SECCIONES_DIPUTADOS.items():
-        pad = PADRON_REAL[seccion]
-        total_validos = int(pad * participacion * votos_validos_pct)
-        cre = creencias_sec.get(seccion, creencias_sec["global"])
-        creencias_norm = normalizar_creencias_para_seccion(cre, seccion)
-        for alianza, pct in creencias_norm.items():
-            filas_dip.append(
-                {
-                    "seccion": seccion,
-                    "lista": alianza,
-                    "votos": int(total_validos * pct / 100),
-                    "cargos": cargos,
-                }
-            )
-
-    for seccion, cargos in SECCIONES_SENADORES.items():
-        pad = PADRON_REAL[seccion]
-        total_validos = int(pad * participacion * votos_validos_pct)
-        cre = creencias_sec.get(seccion, creencias_sec["global"])
-        creencias_norm = normalizar_creencias_para_seccion(cre, seccion)
-        for alianza, pct in creencias_norm.items():
-        # for alianza, pct in cre.items():
-            filas_sen.append(
-                {
-                    "seccion": seccion,
-                    "lista": alianza,
-                    "votos": int(total_validos * pct / 100),
-                    "cargos": cargos,
-                }
-            )
-
-    dip = repartir_bancas(pd.DataFrame(filas_dip))
-    sen = repartir_bancas(pd.DataFrame(filas_sen))
     
+    # Esta función aplica una creencia específica si está definida, o la global si no
+    def creencias_func(seccion):
+        base = creencias_sec.get(seccion, creencias_sec["global"])
+        return normalizar_creencias_para_seccion(base, seccion)
+
+    filas_dip = _filas_para_camara(SECCIONES_DIPUTADOS, creencias_func, participacion, votos_validos_pct)
+    filas_sen = _filas_para_camara(SECCIONES_SENADORES, creencias_func, participacion, votos_validos_pct)
+
+    dip = reglas_electorales.repartir_bancas(pd.DataFrame(filas_dip))
+    sen = reglas_electorales.repartir_bancas(pd.DataFrame(filas_sen))
+
     return dip, sen
 
+
+def normalizar_creencias_para_seccion(creencias: dict[str, int], seccion: str) -> dict[str, float]:
+    """Devuelve un nuevo diccionario de creencias normalizado a 100% para la sección indicada,
+    descartando las alianzas que no compiten en esa sección."""
+    alianzas_validas = {
+        a: pct for a, pct in creencias.items()
+        if a in SECCIONES_X_ALIANZA and seccion in SECCIONES_X_ALIANZA[a]
+    }
+    total = sum(alianzas_validas.values())
+    if total == 0:
+        return {}
+    return {a: 100 * v / total for a, v in alianzas_validas.items()}
 
 def mostrar_resultados(
     dip_final: pd.Series,
@@ -535,17 +512,7 @@ def mostrar_resultados(
                         plt.close(fig_sen_ganador)
 
 
-def normalizar_creencias_para_seccion(creencias: dict[str, int], seccion: str) -> dict[str, float]:
-    """Devuelve un nuevo diccionario de creencias normalizado a 100% para la sección indicada,
-    descartando las alianzas que no compiten en esa sección."""
-    alianzas_validas = {
-        a: pct for a, pct in creencias.items()
-        if a in SECCIONES_X_ALIANZA and seccion in SECCIONES_X_ALIANZA[a]
-    }
-    total = sum(alianzas_validas.values())
-    if total == 0:
-        return {}
-    return {a: 100 * v / total for a, v in alianzas_validas.items()}
+
 
 
 # ---------------------------------------------------------------------------
@@ -693,10 +660,6 @@ if sidebar.button(btn_txt, type="primary"):
 
     # --- Simulación Monte Carlo ---
     else:
-        # n_sim = sidebar.slider("Simulaciones", 100, 2000, 1000)
-        # alpha_scale = sidebar.slider("Alpha scale", 10, 100, 25)
-        # phi_hier = sidebar.slider("Phi", 10, 100, 50)
-
         pesos_dir = np.array(list(creencias_global.values())) * alpha_scale / 100
         #--------NORMALIZACIÓN--------
         # Evita que los pesos sean cero o negativos, lo cual causaría errores en Dir
@@ -706,10 +669,9 @@ if sidebar.button(btn_txt, type="primary"):
         dip_sim, sen_sim = [], []
         prog = st.progress(0)
         txt = st.empty()
-        # DATA_SIM["listas_politicas"] = sorted({p for cre in creencias_por_seccion.values() for p in cre})
         
         for i in range(n_sim):
-            d, s = simular_eleccion(dirichlet_pesos= pesos_dir, data=DATA_SIM, participacion=participacion, votos_validos_pct=votos_validos_pct, phi=phi_hier)
+            d, s = simulacion.simular_eleccion(dirichlet_pesos= pesos_dir, data=DATA_SIM, participacion=participacion, votos_validos_pct=votos_validos_pct, phi=phi_hier)
             dip_sim.append(d)
             sen_sim.append(s)
             if i % 10 == 0:
@@ -724,19 +686,17 @@ if sidebar.button(btn_txt, type="primary"):
 
 
         #-------------------------
-        dip_medoid = medoid(dip_df)
-        sen_medoid = medoid(sen_df) 
+        dip_medoid = simulacion.medoid(dip_df)
+        sen_medoid = simulacion.medoid(sen_df)
 
         # Obtengo el índice de la fila medoid
         idx_medoid_dip = dip_df.reset_index(drop=True).apply(lambda row: (row == dip_medoid).all(), axis=1).idxmax()
-        dip_nuevas = dip_sim[idx_medoid_dip]  # ✅ Esto sí tiene columnas "seccion", "lista", "bancas"
+        dip_nuevas = dip_sim[idx_medoid_dip]  
 
         idx_medoid_sen = sen_df.reset_index(drop=True).apply(lambda row: (row == sen_medoid).all(), axis=1).idxmax()
         sen_nuevas = sen_sim[idx_medoid_sen]
         
-
-
-        
+       
         #-------------------------
 
 
@@ -744,7 +704,7 @@ if sidebar.button(btn_txt, type="primary"):
         sen_final = sumar_no_renovados(sen_medoid, BANCAS_NO_RENUEVAN["senadores"])
 
         # Resúmenes estadísticos
-        tbl_dip, tbl_sen = resumen(dip_df), resumen(sen_df)
+        tbl_dip, tbl_sen = simulacion.resumen(dip_df), simulacion.resumen(sen_df)
 
         # Guardar en session_state
         st.session_state.resultados = {
@@ -780,6 +740,3 @@ if "resultados" in st.session_state:
             distribuciones=res["distribuciones"], 
             detalles_por_seccion=(res["dip_nuevas"], res["sen_nuevas"])
         )
-
-
-
