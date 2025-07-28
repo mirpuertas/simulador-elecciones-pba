@@ -24,7 +24,7 @@ Las secciones electorales, alianzas y padrones provienen de los archivos del añ
 
 ```
 ├── app.py                 # Punto de entrada: construye contexto y llama a UI
-├── ui.py               # Sidebar, cálculos y visualización Streamlit
+├── ui.py                  # Sidebar, cálculos y visualización Streamlit
 ├── config.ini             # Año vigente
 ├── data/
 │   ├─ estructura_congreso_completa_2025.json
@@ -43,12 +43,12 @@ Las secciones electorales, alianzas y padrones provienen de los archivos del añ
 
 ```bash
 # Clonar el repo y entrar
-$ git clone https://github.com/usuario/simulador-pba.git
-$ cd simulador-pba
+$ git clone https://github.com/mirpuertas/simulador-elecciones-pba.git
+$ cd simulador-elecciones-pba
 
 # Crear entorno (recomendado: conda o mamba) y activar
 $ mamba env create -f environment.yml          # o pip ‑r requirements.txt
-$ conda activate simulador-pba
+$ conda activate simulador-elecciones-pba
 
 # Lanzar la aplicación
 $ streamlit run app.py
