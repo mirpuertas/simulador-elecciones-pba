@@ -1,6 +1,6 @@
 # 🗳️ Simulador Electoral PBA 2025
 
-Aplicación **Streamlit** para estimar la distribución de bancas de la Provincia de Buenos Aires según el **cociente Hare + residuos** (art. 110 de la Constitución provincial).  Permite trabajar en dos niveles:
+Aplicación [Streamlit](https://simulador-elecciones-pba.streamlit.app) para estimar la distribución de bancas de la Provincia de Buenos Aires según el **cociente Hare + residuos** (art. 110 de la Constitución provincial).  Permite trabajar en dos niveles:
 
 - **Modo Básico (determinista)** – reparte bancas exactamente a partir de los porcentajes que ingreses.
 - **Modo Avanzado (β – Monte Carlo)** – genera miles de sorteos Dirichlet para medir incertidumbre (EN DESARROLLO).
