@@ -24,13 +24,13 @@ Las secciones electorales, alianzas y padrones provienen de los archivos del añ
 
 ```
 ├── app.py                 # Punto de entrada: construye contexto y llama a UI
+├── ui.py               # Sidebar, cálculos y visualización Streamlit
 ├── config.ini             # Año vigente
 ├── data/
 │   ├─ estructura_congreso_completa_2025.json
 │   ├─ congreso_composicion_inicial_2025.csv
 │   └─ secciones_pba.geojson
 └── utils/
-    ├─ ui.py               # Sidebar, cálculos y visualización Streamlit
     ├─ calculos.py         # Reglas deterministas (diputados‑senadores)
     ├─ cuociente.py        # Algoritmo Hare + residuos
     ├─ plots.py            # Mapas, parlamento, densidades
