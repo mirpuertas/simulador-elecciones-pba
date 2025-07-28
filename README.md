@@ -1,73 +1,83 @@
-# 🗳️ Simulador Electoral PBA 2025
+🗳️ Simulador Electoral PBA 2025
 
-App interactiva para simular elecciones legislativas en la Provincia de Buenos Aires, utilizando el sistema de cociente Hare con distribución por residuos. Permite definir intención de voto por sección electoral, ejecutar simulaciones y visualizar los resultados de forma clara e interactiva.
+Aplicación **Streamlit** para estimar la distribución de bancas de la Provincia de Buenos Aires según el **cociente Hare + residuos** (art. 110 de la Constitución provincial).  Permite trabajar en dos niveles:
+
+- **Modo Básico (determinista)** – reparte bancas exactamente a partir de los porcentajes que ingreses.
+- **Modo Avanzado (β – Monte Carlo)** – genera miles de sorteos Dirichlet para medir incertidumbre (EN DESARROLLO).
+
+Las secciones electorales, alianzas y padrones provienen de los archivos del año vigente.  Bastan **dos archivos JSON/CSV** para cargar otro año (2027, 2029…).
+
+Las secciones electorales, alianzas y padrones provienen de los archivos del año vigente.  Bastan dos archivos JSON/CSV para cargar otro año (2027, 2029…).
 
 ## Funcionalidades
 
-- **Asignación de bancas** por cociente electoral (Hare) + residuos
-- Modo **determinista** (asignación exacta) y **Monte Carlo** (simulación aleatoria)
-- Definición de intención de voto por sección electoral
-- Mapa interactivo con actualización por sección
-- Modo avanzado: edición detallada por sección (sliders)
-- Visualización de resultados en mapas, gráficos y tablas
-- Arquitectura **modular y escalable** para otras elecciones (ej. 2027)
+| Característica                    | Detalle                                                                               |
+| --------------------------------- | ------------------------------------------------------------------------------------- |
+| **Asignación de bancas**          | Cociente Hare + reparto por residuos, validado contra resultados oficiales 2021‑2023. |
+| **Intención de voto por sección** | Sliders globales y, opcionalmente, sliders por sección.                               |
+| **Mapas interactivos**            | Bancas ganadas, diferencias y partido ganador por sección.                            |
+| **Parlamento semicircular**       | Visualización con *poli‑sci‑kit*.                                                     |
+| **Arquitectura modular**          | Backend puro (sin Streamlit) + frontend UI; listo para API o CLI.                     |
+
 
 ## Estructura del proyecto
 
-   ```
-├── app.py # Frontend en Streamlit
-├── config.ini # Año de elección y parámetros generales
+```
+├── app.py                 # Punto de entrada: construye contexto y llama a UI
+├── config.ini             # Año vigente
 ├── data/
-│ ├── estructura_congreso_completa_2025.json
-│ └── congreso_composicion_inicial_2025.csv
-│ └── secciones_pba.geojson # Mapa de secciones electorales
-├── utils/
-│ ├── congreso.py # Composición actual y mapeo de alianzas
-│ ├── loader.py # Carga de archivos por año
-│ └── reglas_electorales.py # Reglas de reparto, simulación y resumen
-│ └── simulacion.py
-│ └── geotools.py
-│ └── plots.py
-   ```
-## Acceder a la versión Online 2025
-
-Simulador
-
-## Cómo ejecutar
-
-### 1. Instalar dependencias
-
-```
-pip install -r requirements.txt
+│   ├─ estructura_congreso_completa_2025.json
+│   ├─ congreso_composicion_inicial_2025.csv
+│   └─ secciones_pba.geojson
+└── utils/
+    ├─ ui.py               # Sidebar, cálculos y visualización Streamlit
+    ├─ calculos.py         # Reglas deterministas (diputados‑senadores)
+    ├─ cuociente.py        # Algoritmo Hare + residuos
+    ├─ plots.py            # Mapas, parlamento, densidades
+    ├─ geotools.py         # Centroides seguros (EPSG 22185)
+    ├─ congreso.py         # DTO + validación de JSON/CSV
+    └─ loader.py           # Carga/caché del año vigente
 ```
 
-### 2. Ejecuta la app
+## Instalación rápida
+
+```bash
+# Clonar el repo y entrar
+$ git clone https://github.com/usuario/simulador-pba.git
+$ cd simulador-pba
+
+# Crear entorno (recomendado: conda o mamba) y activar
+$ mamba env create -f environment.yml          # o pip ‑r requirements.txt
+$ conda activate simulador-pba
+
+# Lanzar la aplicación
+$ streamlit run app.py
 ```
-streamlit run app.py
-```
 
-### 3. Interfaz
+> **Nota:**  `geopandas` requiere GEOS/PROJ.  En Windows usá `mambaforge`; en Linux podés instalar las libs del sistema (`libgeos-dev`, `proj-bin`, `gdal`).
 
-- Elegí el año electoral
-- Seleccioná modo de simulación (determinista / Monte Carlo)
-- Definí la intención de voto por sección
-- Visualizá mapas, gráficos y resultados parlamentarios
+## Uso de la interfaz
 
-## Datos
+1. **Elegí las alianzas visibles** (se sugiere un set mínimo).
+2. Ajustá **participación** y **% de votos válidos**.
+3. Definí la **intención de voto global** (sliders).
+4. (Opcional) Activá *configuración por sección* y personalizá sliders locales.
+5. Clic en **🚀 Ejecutar cálculo**.
+6. Explorá tabs: **Bancas ganadas · Parlamento · Detalles**.
 
-- estructura_congreso_completa_<año>.json: define las bancas a renovar y alianzas participantes
+## Datos de entrada
 
-- congreso_composicion_inicial_<año>.csv: composición actual del congreso (usado para mostrar cambios)
+| Archivo                                   | Propósito                                  |
+| ----------------------------------------- | ------------------------------------------ |
+| `estructura_congreso_completa_<año>.json` | Padrones, bancas por sección, alianzas.    |
+| `congreso_composicion_inicial_<año>.csv`  | Banca vigente (para calcular diferencias). |
+| `secciones_pba.geojson`                   | Geometría de las 8 secciones electorales.  |
 
-- secciones_pba.geojson: mapa de secciones electorales
-
-Podés simular nuevos escenarios actualizando los archivos de datos sin modificar el código.
+Cambiar de año = añadir el par JSON/CSV con el mismo esquema y ajustar `año_vigente` en ``.
 
 ## Conceptos clave
 
-- Cociente electoral Hare: se divide el total de votos válidos por la cantidad de bancas; cada lista obtiene tantas bancas como veces contenga el cociente. Las bancas restantes se reparten según los residuos más altos.
-- Simulación Monte Carlo: genera resultados posibles a partir de distribuciones de probabilidad.
-- Modo determinista: asigna bancas directamente a partir de los porcentajes ingresados.
+- **Cociente Hare** ⇒ `total_votos / cargos`; cada lista recibe ⌊ votos / cuociente ⌋ bancas.  Restantes se asignan por mayor residuo.
 
 ## Licencia
 
@@ -75,4 +85,6 @@ Este proyecto está bajo la licencia MIT. [Ver LICENSE.](https://github.com/mirp
 
 ## Autor
 
-Miguel Ignacio Rodríguez Puertas · [@mirpuertas](https://github.com/mirpuertas)
+Miguel Ignacio Rodríguez Puertas — [@mirpuertas](https://github.com/mirpuertas)
+
+
