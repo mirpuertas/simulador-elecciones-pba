@@ -71,7 +71,7 @@ $ streamlit run app.py
 | ----------------------------------------- | ------------------------------------------ |
 | `estructura_congreso_completa_<año>.json` | Padrones, bancas por sección, alianzas.    |
 | `congreso_composicion_inicial_<año>.csv`  | Banca vigente (para calcular diferencias). |
-| `secciones_pba.geojson`                   | Geometría de las 8 secciones electorales.  |
+| `secciones-electorales-pba.geojson`       | Geometría de las 8 secciones electorales.  |
 
 Cambiar de año = añadir el par JSON/CSV con el mismo esquema y ajustar `año_vigente` en ``.
 
