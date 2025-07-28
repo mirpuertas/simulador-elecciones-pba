@@ -1,19 +1,19 @@
 import pandas as pd
 
-def repartir_bancas(df):
+def repartir_bancas(df: pd.DataFrame) -> pd.DataFrame:
     out = []
 
     for seccion, grupo in df.groupby("seccion"):
         total_votos = grupo["votos"].sum()
         cargos      = grupo["cargos"].iloc[0]
-        cuociente   = max(1, total_votos // cargos)        # ← asegura ≥1
+        cuociente   = max(1, total_votos // cargos)        # Asegura >= 1
 
         grupo = grupo.copy()
         grupo["enteros"] = grupo["votos"] // cuociente
         grupo["residuo"] = grupo["votos"] %  cuociente
         grupo["bancas"]  = grupo["enteros"]
 
-        # ── Restos solo entre listas con ≥1 cuociente
+        # Restos solo entre listas con >= 1 cuociente
         faltan = cargos - grupo["bancas"].sum()
         
         if faltan > 0:  # Solo asignar si realmente faltan bancas
@@ -42,16 +42,15 @@ def repartir_bancas(df):
                                                 ascending=False)
                                        .head(faltan).index)
                         grupo.loc[idx, "bancas"] += 1
-                elif faltan < 0:  # Si hay demasiadas bancas, quitarlas
-                    # Quitar bancas de las listas con menor residuo/votos
+                elif faltan < 0:
                     elig = grupo[grupo["bancas"] > 0]
                     if not elig.empty:
                         idx = (elig.sort_values(["residuo", "votos"],
-                                                ascending=True)  # Ascendente para quitar de los menores
+                                                ascending=True)
                                        .head(-faltan).index)
                         grupo.loc[idx, "bancas"] -= 1
 
-        # ── Paso 5: completar con la lista más votada
+        # Completar con la lista más votada
         faltan = cargos - grupo["bancas"].sum()
         if faltan:
             top = grupo["votos"].idxmax()

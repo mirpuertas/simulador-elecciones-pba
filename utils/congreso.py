@@ -7,7 +7,9 @@ def nested_defaultdict_int():
 
 class Congreso:
     def __init__(self, json_path, csv_path):
-        self.estructura = self._cargar_json(json_path)
+        estructura = self._cargar_json(json_path)
+        self.validar_schema_estructura(estructura)
+        self.estructura = estructura
         self.df_composicion = pd.read_csv(csv_path)
         self.partido_a_alianza = self._crear_mapeo_partido_alianza()
         self.composicion_actual = self._calcular_composicion(solo_no_renueva=False)
@@ -80,3 +82,20 @@ class Congreso:
 
     def obtener_alianza_de(self, partido):
         return self.partido_a_alianza.get(self._normalizar_partido(partido), None)
+    
+    def validar_schema_estructura(self, estructura: dict) -> None:
+        """Valida que el JSON tenga los campos esperados."""
+        requeridos = ["alianzas", "padron", "bancas_por_seccion"]
+        for campo in requeridos:
+            if campo not in estructura:
+                raise ValueError(f"Falta el campo '{campo}' en el JSON de estructura")
+
+        if not isinstance(estructura["alianzas"], dict):
+            raise TypeError("El campo 'alianzas' debe ser un dict")
+
+        if not isinstance(estructura["padron"], dict):
+            raise TypeError("El campo 'padron' debe ser un dict")
+
+        if not isinstance(estructura["bancas_por_seccion"], dict):
+            raise TypeError("El campo 'bancas_por_seccion' debe ser un dict")
+

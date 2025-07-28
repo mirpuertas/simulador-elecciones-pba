@@ -1,8 +1,9 @@
 from pathlib import Path
 from utils.congreso import Congreso
 import configparser
+from functools import cache
 
-
+@cache
 def cargar_congreso(anio: int | None = None) -> Congreso:
     """Devuelve una instancia de `Congreso` para el año solicitado.
 

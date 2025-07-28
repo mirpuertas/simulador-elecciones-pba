@@ -2,27 +2,23 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import poli_sci_kit.plot as pk
 
-import numpy as np
-from scipy.stats import gaussian_kde
-
 from typing import Mapping
 
 from utils.geotools import obtener_centroides_seguros
 
+__all__ = ["mapa_bancas_ganadas", "mapa_diferencias_estatico", "mapa_ganadores", "crear_parlamento"]
 
 
-def crear_mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo, ax=None):
+def mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo, ax=None):
     """Crea un mapa estático de bancas ganadas por alianza."""
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8))
     else:
         fig = ax.get_figure()
     
-    # Preparar datos
     gdf_plot = gdf_secciones.copy()
     gdf_plot["bancas"] = gdf_plot["seccion"].map(bancas_ganadas_df[alianza]).fillna(0)
     
-    # Definir colores
     vmax = gdf_plot["bancas"].max()
     if vmax == 0:
         ax.text(0.5, 0.5, "No hay bancas ganadas para mostrar", transform=ax.transAxes, 
@@ -32,7 +28,6 @@ def crear_mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo,
         ax.set_title(titulo)
         return fig
     
-    # Crear mapa con escala de colores desde 0 (blanco/gris claro) hasta vmax
     gdf_plot.plot(
         column="bancas",
         cmap="Blues",
@@ -45,9 +40,8 @@ def crear_mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo,
         linewidth=0.5
     )
 
-    # Preparar datos
     centroides = obtener_centroides_seguros(gdf_plot)
-    # Agregar anotaciones con números de bancas
+
     for idx, row in gdf_plot.iterrows():
         if row["bancas"] > 0:
             centroide = centroides.iloc[idx]
@@ -62,21 +56,20 @@ def crear_mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo,
     
     ax.set_title(titulo, fontsize=14, fontweight='bold')
     ax.set_axis_off()
+    plt.close(fig)
     return fig
 
 
-def crear_mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, ax=None):
+def mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, ax=None):
     """Crea un mapa estático de diferencias de bancas por alianza."""
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8))
     else:
         fig = ax.get_figure()
     
-    # Preparar datos
     gdf_plot = gdf_secciones.copy()
     gdf_plot["ganancia"] = gdf_plot["seccion"].map(cambios_df[alianza]).fillna(0)
     
-    # Definir colores
     vmax = gdf_plot["ganancia"].abs().max()
     if vmax == 0:
         ax.text(0.5, 0.5, "No hay cambios para mostrar", transform=ax.transAxes, 
@@ -86,7 +79,6 @@ def crear_mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, 
         ax.set_title(titulo)
         return fig
     
-    # Crear mapa
     gdf_plot.plot(
         column="ganancia",
         cmap="RdYlGn",
@@ -97,9 +89,8 @@ def crear_mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, 
         legend_kwds={'label': 'Ganancia de bancas', 'shrink': 0.8}
     )
     
-    # Preparar datos
     centroides = obtener_centroides_seguros(gdf_plot)
-    # Agregar anotaciones con números
+
     for idx, row in gdf_plot.iterrows():
         if abs(row["ganancia"]) > 0:
             centroide = centroides.iloc[idx]
@@ -113,34 +104,31 @@ def crear_mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, 
     
     ax.set_title(titulo, fontsize=14, fontweight='bold')
     ax.set_axis_off()
+    plt.close(fig)
     return fig
 
 
-def crear_mapa_ganadores(gdf_secciones, bancas_totales_df, colores_partidos, titulo, ax=None):
+def mapa_ganadores(gdf_secciones, bancas_totales_df, colores_partidos, titulo, ax=None):
     """Crea un mapa mostrando el partido ganador por sección."""
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8))
     else:
         fig = ax.get_figure()
     
-    # Calcular ganador por sección
     ganadores = bancas_totales_df.idxmax(axis=1)
     max_bancas = bancas_totales_df.max(axis=1)
     
-    # Preparar datos
     gdf_plot = gdf_secciones.copy()
     gdf_plot["ganador"] = gdf_plot["seccion"].map(ganadores).fillna("Sin datos")
     gdf_plot["max_bancas"] = gdf_plot["seccion"].map(max_bancas).fillna(0)
     
-    # Crear mapa base con bordes para todas las secciones
     gdf_plot.plot(
-        color="#F0F0F0",  # Color gris claro para secciones sin datos
+        color="#F0F0F0", 
         ax=ax,
         edgecolor='black',
         linewidth=0.5
     )
     
-    # Superponer colores de ganadores
     for ganador in gdf_plot["ganador"].unique():
         if ganador != "Sin datos":
             subset = gdf_plot[gdf_plot["ganador"] == ganador]
@@ -153,7 +141,7 @@ def crear_mapa_ganadores(gdf_secciones, bancas_totales_df, colores_partidos, tit
             )
     
     centroides = obtener_centroides_seguros(gdf_plot)
-    # Agregar anotaciones con números de bancas
+    
     for idx, row in gdf_plot.iterrows():
         if row["max_bancas"] > 0:
             centroide = centroides.iloc[idx]
@@ -179,20 +167,8 @@ def crear_mapa_ganadores(gdf_secciones, bancas_totales_df, colores_partidos, tit
     if legend_elements:
         ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(1, 1))
     
+    plt.close(fig)
     return fig
-
-def plot_distribucion(df, colores: Mapping[str, str], ax=None):
-    if df is None or df.empty:
-        raise ValueError("DataFrame vacío")
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(8, 4))
-    for alianza, datos in df.items():      # df.columns → series
-        xs = np.linspace(datos.min(), datos.max(), 400)
-        dens = gaussian_kde(datos)(xs)
-        ax.plot(xs, dens, label=alianza,
-                color=colores.get(alianza, "#888"))
-    ax.legend(); ax.grid(True, alpha=0.3)
-    return ax.get_figure()
 
 def crear_parlamento(series, titulo, colores: Mapping[str, str]):
     series = series[series > 0].sort_values(ascending=False)
@@ -215,5 +191,6 @@ def crear_parlamento(series, titulo, colores: Mapping[str, str]):
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1),
               ncol=3, frameon=False)
     
+    plt.close(fig)
     return fig
 

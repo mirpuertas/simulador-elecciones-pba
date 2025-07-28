@@ -1,7 +1,6 @@
 import geopandas as gpd
-from shapely.geometry import Point
 
-def obtener_centroides_seguros(gdf: gpd.GeoDataFrame, epsg_proj: int = 3857) -> gpd.GeoSeries:
+def obtener_centroides_seguros(gdf: gpd.GeoDataFrame, epsg_proj: int = 22185) -> gpd.GeoSeries:
     """
     Calcula centroides geométricamente correctos para un GeoDataFrame con CRS geográfico.
     
