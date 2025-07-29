@@ -13,6 +13,8 @@ geopandas>=0.13.0
 shapely>=2.0.0
 fiona>=1.9.0
 pyproj>=3.5.0
+# Recomendado por geopandas
+rtree>=1.0.1
 
 # === VISUALIZATION ===
 matplotlib>=3.7.0
@@ -22,7 +24,6 @@ poli-sci-kit>=1.1.0
 configparser>=5.3.0
 
 # === OPTIONAL: PERFORMANCE ===
-# Uncomment if you want faster performance
-# openpyxl>=3.1.0  # For Excel file support
-# fastparquet>=0.8.0  # For faster Parquet files
-# psutil>=5.9.0  # For system monitoring 
+# openpyxl>=3.1.0         # Para soporte de archivos Excel
+# fastparquet>=0.8.0      # Para archivos Parquet
+# psutil>=5.9.0           # Monitoreo del sistema
