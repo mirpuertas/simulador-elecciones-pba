@@ -1,13 +1,15 @@
-from __future__ import annotations
-
 import pandas as pd
 import streamlit as st
 from utils import plots
 
-from typing import TYPE_CHECKING
+import geopandas as gpd
 
-if TYPE_CHECKING:
-    import geopandas as gpd
+__all__ = [
+    "configurar_sidebar",
+    "configurar_intenciones_voto",
+    "renderizar_boton_ejecutar",
+    "mostrar_resultados"
+]
 
 
 def configurar_sidebar(alianzas_globales: list[str], alianzas_recomendadas: list[str], 
@@ -137,6 +139,7 @@ def mostrar_resultados(
     participacion = st.session_state.get("resultados", {}).get("participacion", 0.6)
     votos_validos_pct = st.session_state.get("resultados", {}).get("votos_validos_pct", 0.9)
     padron_real = ctx["PADRON_REAL"]
+    epsg_proj = ctx["EPSG_PROJ"]
     
     tabs = ["📊 Bancas Ganadas", "🏛️ Parlamentos", "📋 Detalles"]
     tab_objs = st.tabs(tabs)
@@ -151,6 +154,10 @@ def mostrar_resultados(
             # Tablas de bancas ganadas por sección
             dip_ganadas = dip_nuevas.groupby(["seccion", "lista"]).bancas.sum().unstack(fill_value=0)
             sen_ganadas = sen_nuevas.groupby(["seccion", "lista"]).bancas.sum().unstack(fill_value=0)
+
+            # No mostrar tablas vacías
+            dip_ganadas = dip_ganadas.loc[:, (dip_ganadas != 0).any(axis=0)]
+            sen_ganadas = sen_ganadas.loc[:, (sen_ganadas != 0).any(axis=0)]
             
             col_table1, col_table2 = st.columns(2)
             with col_table1:
@@ -172,7 +179,7 @@ def mostrar_resultados(
             
             # Mapas de bancas ganadas
             if gdf_secciones is not None and not dip_ganadas.empty:
-                _renderizar_mapas_bancas_ganadas(gdf_secciones, dip_ganadas, sen_ganadas, colores_partidos)
+                _renderizar_mapas_bancas_ganadas(gdf_secciones, dip_ganadas, sen_ganadas, colores_partidos, epsg_proj)
 
     # Parlamentos
     with tab_objs[1]:
@@ -190,11 +197,11 @@ def mostrar_resultados(
     # Detalles
     with tab_objs[2]:
         _renderizar_tab_detalles(dip_final, sen_final, padron_real, participacion, 
-                                votos_validos_pct, detalles_por_seccion, ctx, gdf_secciones)
+                                votos_validos_pct, detalles_por_seccion, ctx, gdf_secciones, epsg_proj)
 
 
 def _renderizar_mapas_bancas_ganadas(gdf_secciones: gpd.GeoDataFrame, dip_ganadas: pd.DataFrame, 
-                                   sen_ganadas: pd.DataFrame, colores_partidos: dict):
+                                   sen_ganadas: pd.DataFrame, colores_partidos: dict, epsg_proj: int) -> None:
     """Renderiza los mapas de bancas ganadas."""
     st.markdown("### 🗺️ Mapas de bancas ganadas por alianza")
     
@@ -218,7 +225,8 @@ def _renderizar_mapas_bancas_ganadas(gdf_secciones: gpd.GeoDataFrame, dip_ganada
             
             fig_dip = plots.mapa_bancas_ganadas(
                 gdf_secciones, dip_ganadas, alianza_dip,
-                f"Bancas ganadas - {alianza_dip} (Diputados)"
+                f"Bancas ganadas - {alianza_dip} (Diputados)",
+                epsg_proj=epsg_proj
             )
             st.pyplot(fig_dip, use_container_width=True)
         
@@ -234,7 +242,8 @@ def _renderizar_mapas_bancas_ganadas(gdf_secciones: gpd.GeoDataFrame, dip_ganada
             
             fig_sen = plots.mapa_bancas_ganadas(
                 gdf_secciones, sen_ganadas, alianza_sen,
-                f"Bancas ganadas - {alianza_sen} (Senadores)"
+                f"Bancas ganadas - {alianza_sen} (Senadores)",
+                epsg_proj=epsg_proj
             )
             st.pyplot(fig_sen, use_container_width=True)
     
@@ -247,7 +256,8 @@ def _renderizar_mapas_bancas_ganadas(gdf_secciones: gpd.GeoDataFrame, dip_ganada
             st.markdown("**Diputados - Quién ganó más bancas**")
             fig_dip_ganador = plots.mapa_ganadores(
                 gdf_secciones, dip_ganadas, colores_partidos,
-                "Partido con más bancas nuevas - Diputados"
+                "Partido con más bancas nuevas - Diputados",
+                epsg_proj=epsg_proj
             )
             st.pyplot(fig_dip_ganador, use_container_width=True)
         
@@ -255,7 +265,8 @@ def _renderizar_mapas_bancas_ganadas(gdf_secciones: gpd.GeoDataFrame, dip_ganada
             st.markdown("**Senadores - Quién ganó más bancas**")
             fig_sen_ganador = plots.mapa_ganadores(
                 gdf_secciones, sen_ganadas, colores_partidos,
-                "Partido con más bancas nuevas - Senadores"
+                "Partido con más bancas nuevas - Senadores",
+                epsg_proj=epsg_proj
             )
             st.pyplot(fig_sen_ganador, use_container_width=True)
 
@@ -263,17 +274,19 @@ def _renderizar_mapas_bancas_ganadas(gdf_secciones: gpd.GeoDataFrame, dip_ganada
 def _renderizar_tab_detalles(dip_final: pd.Series, sen_final: pd.Series,
                            padron_real: dict, participacion: float, votos_validos_pct: float,
                            detalles_por_seccion: tuple[pd.DataFrame, pd.DataFrame] | None,
-                           ctx: dict, gdf_secciones: gpd.GeoDataFrame | None):
+                           ctx: dict, gdf_secciones: gpd.GeoDataFrame | None, epsg_proj: int) -> None:
     """Renderiza el tab de detalles."""
 
     st.subheader("📊 Resumen de bancas")
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("#### Diputados")
-        st.dataframe(dip_final.rename("Bancas"))
+        st.dataframe(dip_final[dip_final > 0].rename("Bancas"))
+        # st.dataframe(dip_final.rename("Bancas"))
     with col2:
         st.markdown("#### Senadores")
-        st.dataframe(sen_final.rename("Bancas"))
+        st.dataframe(sen_final[sen_final > 0].rename("Bancas"))
+        # st.dataframe(sen_final.rename("Bancas"))
     
     st.markdown("---")
    
@@ -287,11 +300,11 @@ def _renderizar_tab_detalles(dip_final: pd.Series, sen_final: pd.Series,
         st.metric("Votos válidos", f"{votos_validos_pct:.1%}")
     
     if detalles_por_seccion is not None:
-        _renderizar_diferencias_por_seccion(detalles_por_seccion, ctx, gdf_secciones)
+        _renderizar_diferencias_por_seccion(detalles_por_seccion, ctx, gdf_secciones, epsg_proj)
 
 
 def _renderizar_diferencias_por_seccion(detalles_por_seccion: tuple[pd.DataFrame, pd.DataFrame],
-                                       ctx: dict, gdf_secciones: gpd.GeoDataFrame | None):
+                                       ctx: dict, gdf_secciones: gpd.GeoDataFrame | None, epsg_proj: int) -> None:
     """Renderiza las diferencias por sección."""
     dip_nuevas, sen_nuevas = detalles_por_seccion
     bancas_no_renuevan = ctx["BANCAS_NO_RENUEVAN"]
@@ -330,6 +343,10 @@ def _renderizar_diferencias_por_seccion(detalles_por_seccion: tuple[pd.DataFrame
     dip_cambio = diferencia_por_seccion(dip_nuevas, "diputados")
     sen_cambio = diferencia_por_seccion(sen_nuevas, "senadores")
 
+    # NO mostrar tablas vacías
+    dip_cambio = dip_cambio.loc[:, (dip_cambio != 0).any(axis=0)]
+    sen_cambio = sen_cambio.loc[:, (sen_cambio != 0).any(axis=0)]
+
     # Tablas de diferencias
     st.markdown("### 📊 Ganancia/Pérdida por Sección")
     
@@ -345,13 +362,13 @@ def _renderizar_diferencias_por_seccion(detalles_por_seccion: tuple[pd.DataFrame
     # Mapas de diferencias
     if gdf_secciones is not None and not dip_cambio.empty:
         _renderizar_mapas_diferencias(gdf_secciones, dip_cambio, sen_cambio, colores_partidos,
-                                    dip_nuevas, sen_nuevas, bancas_no_renuevan, ctx)
+                                    dip_nuevas, sen_nuevas, bancas_no_renuevan, ctx, epsg_proj)
 
 
 def _renderizar_mapas_diferencias(gdf_secciones: gpd.GeoDataFrame, dip_cambio: pd.DataFrame,
                                 sen_cambio: pd.DataFrame, colores_partidos: dict,
                                 dip_nuevas: pd.DataFrame, sen_nuevas: pd.DataFrame,
-                                bancas_no_renuevan: dict, ctx: dict):
+                                bancas_no_renuevan: dict, ctx: dict, epsg_proj: int) -> None:
     """Renderiza los mapas de diferencias."""
     st.markdown("### 🗺️ Mapas de diferencias por alianza")
 
@@ -374,7 +391,8 @@ def _renderizar_mapas_diferencias(gdf_secciones: gpd.GeoDataFrame, dip_cambio: p
             
             fig_dip = plots.mapa_diferencias_estatico(
                 gdf_secciones, dip_cambio, alianza_dip,
-                f"Diferencia de bancas - {alianza_dip}"
+                f"Diferencia de bancas - {alianza_dip}",
+                epsg_proj=epsg_proj
             )
             st.pyplot(fig_dip, use_container_width=True)
         
@@ -390,7 +408,8 @@ def _renderizar_mapas_diferencias(gdf_secciones: gpd.GeoDataFrame, dip_cambio: p
             
             fig_sen = plots.mapa_diferencias_estatico(
                 gdf_secciones, sen_cambio, alianza_sen,
-                f"Diferencia de bancas - {alianza_sen}"
+                f"Diferencia de bancas - {alianza_sen}",
+                epsg_proj=epsg_proj
             )
             st.pyplot(fig_sen, use_container_width=True)
     
@@ -424,7 +443,8 @@ def _renderizar_mapas_diferencias(gdf_secciones: gpd.GeoDataFrame, dip_cambio: p
             st.markdown("**Diputados - Quién ganó más bancas**")
             fig_dip_ganador = plots.mapa_ganadores(
                 gdf_secciones, dip_totales, colores_partidos,
-                "Partido con más bancas - Diputados"
+                "Partido con más bancas - Diputados",
+                epsg_proj=epsg_proj
             )
             st.pyplot(fig_dip_ganador, use_container_width=True)
         
@@ -432,6 +452,7 @@ def _renderizar_mapas_diferencias(gdf_secciones: gpd.GeoDataFrame, dip_cambio: p
             st.markdown("**Senadores - Quién ganó más bancas**")
             fig_sen_ganador = plots.mapa_ganadores(
                 gdf_secciones, sen_totales, colores_partidos,
-                "Partido con más bancas - Senadores"
+                "Partido con más bancas - Senadores",
+                epsg_proj=epsg_proj
             )
             st.pyplot(fig_sen_ganador, use_container_width=True)

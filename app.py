@@ -1,15 +1,7 @@
-from __future__ import annotations
-
 import streamlit as st
-import geopandas as gpd
 
-from utils import loader, calculos
-from ui import (
-    configurar_sidebar, 
-    configurar_intenciones_voto, 
-    renderizar_boton_ejecutar, 
-    mostrar_resultados
-)
+from utils import loader, calculos, ui
+
 
 # ------ Configuración de Streamlit ------
 st.set_page_config(
@@ -37,17 +29,10 @@ def build_context(alianzas_visibles: list[str]):
         SECCIONES_SENADORES=bancas["senadores"],
         COLORES_PARTIDOS=congreso.obtener_colores_alianzas(),
         SECCIONES_X_ALIANZA=congreso.obtener_secciones_por_alianza(),
-        BANCAS_NO_RENUEVAN=congreso.obtener_bancas_no_disputadas()
+        BANCAS_NO_RENUEVAN=congreso.obtener_bancas_no_disputadas(),
+        GDF_SECCIONES=loader.cargar_secciones_geojson(),
+        EPSG_PROJ=loader.leer_epsg_proyectado(),
     )
-
-@st.cache_data(show_spinner=False)
-def load_secciones_geojson(path: str = "data/secciones-electorales-pba.geojson") -> gpd.GeoDataFrame | None:
-    """Lee el GeoJSON de secciones"""
-    try:
-        return gpd.read_file(path)
-    except Exception as exc:  # pragma: no cover – solo falla en tiempo de ejecución
-        st.error(f"Error cargando GeoJSON: {exc}")
-        return None
 
 # ------ Configuración inicial ------
 ALIANZAS_RECOMENDADAS = [
@@ -66,12 +51,11 @@ ALIANZAS_GLOBALES = [
     if len(secciones) >= 1
 ]
 
-GDF_SECCIONES = load_secciones_geojson()  # Cargar geodata
 
 # ------ Interfaz de usuario ------
 
 # Configurar sidebar y obtener alianzas visibles
-alianzas_visibles, configuracion = configurar_sidebar(
+alianzas_visibles, configuracion = ui.configurar_sidebar(
     ALIANZAS_GLOBALES, 
     ALIANZAS_RECOMENDADAS, 
     SECCIONES_X_ALIANZA, 
@@ -81,7 +65,7 @@ alianzas_visibles, configuracion = configurar_sidebar(
 ctx = build_context(alianzas_visibles)  # Construir contexto con alianzas seleccionadas
 
 # Configurar intenciones de voto
-creencias_global, creencias_por_seccion = configurar_intenciones_voto(
+creencias_global, creencias_por_seccion = ui.configurar_intenciones_voto(
     alianzas_visibles,
     configuracion['cfg_seccion'],
     ctx["PADRON_REAL"],
@@ -97,7 +81,7 @@ votos_validos_pct = configuracion['votos_validos_pct']
 total_pct = sum(creencias_global.values())
 
 # Renderizar botón de ejecución
-if renderizar_boton_ejecutar(total_pct):
+if ui.renderizar_boton_ejecutar(total_pct):
     
     # Cálculo determinista
     if cfg_seccion and creencias_por_seccion:
@@ -145,10 +129,10 @@ if renderizar_boton_ejecutar(total_pct):
 if "resultados" in st.session_state:
     res = st.session_state.resultados
     
-    mostrar_resultados(
+    ui.mostrar_resultados(
         res["dip_final"], 
         res["sen_final"], 
         ctx=ctx,
-        gdf_secciones=GDF_SECCIONES,
+        gdf_secciones=ctx["GDF_SECCIONES"],
         detalles_por_seccion=(res["dip_nuevas"], res["sen_nuevas"])
     )

@@ -1,15 +1,24 @@
+from typing import Mapping, Optional
+import geopandas as gpd
+import pandas as pd
+from matplotlib.figure import Figure
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import poli_sci_kit.plot as pk
-
-from typing import Mapping
 
 from utils.geotools import obtener_centroides_seguros
 
 __all__ = ["mapa_bancas_ganadas", "mapa_diferencias_estatico", "mapa_ganadores", "crear_parlamento"]
 
 
-def mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo, ax=None):
+def mapa_bancas_ganadas(gdf_secciones: gpd.GeoDataFrame,
+    bancas_ganadas_df: pd.DataFrame,
+    alianza: str,
+    titulo: str,
+    ax=None,
+    epsg_proj: int = 22185
+    ) -> Figure:
     """Crea un mapa estático de bancas ganadas por alianza."""
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -40,7 +49,7 @@ def mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo, ax=No
         linewidth=0.5
     )
 
-    centroides = obtener_centroides_seguros(gdf_plot)
+    centroides = obtener_centroides_seguros(gdf_plot, epsg_proj)
 
     for idx, row in gdf_plot.iterrows():
         if row["bancas"] > 0:
@@ -60,7 +69,13 @@ def mapa_bancas_ganadas(gdf_secciones, bancas_ganadas_df, alianza, titulo, ax=No
     return fig
 
 
-def mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, ax=None):
+def mapa_diferencias_estatico(gdf_secciones: gpd.GeoDataFrame,
+    cambios_df: pd.DataFrame,
+    alianza: str,
+    titulo: str,
+    ax=None,
+    epsg_proj: int = 22185
+    ) -> Figure:
     """Crea un mapa estático de diferencias de bancas por alianza."""
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -88,8 +103,8 @@ def mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, ax=Non
         legend=True,
         legend_kwds={'label': 'Ganancia de bancas', 'shrink': 0.8}
     )
-    
-    centroides = obtener_centroides_seguros(gdf_plot)
+
+    centroides = obtener_centroides_seguros(gdf_plot, epsg_proj=epsg_proj)
 
     for idx, row in gdf_plot.iterrows():
         if abs(row["ganancia"]) > 0:
@@ -108,7 +123,13 @@ def mapa_diferencias_estatico(gdf_secciones, cambios_df, alianza, titulo, ax=Non
     return fig
 
 
-def mapa_ganadores(gdf_secciones, bancas_totales_df, colores_partidos, titulo, ax=None):
+def mapa_ganadores(gdf_secciones: gpd.GeoDataFrame,
+    bancas_totales_df: pd.DataFrame,
+    colores_partidos: dict,
+    titulo: str,
+    ax=None,
+    epsg_proj: int = 22185
+    ) -> Figure:
     """Crea un mapa mostrando el partido ganador por sección."""
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -139,9 +160,9 @@ def mapa_ganadores(gdf_secciones, bancas_totales_df, colores_partidos, titulo, a
                 edgecolor='black',
                 linewidth=0.5
             )
-    
-    centroides = obtener_centroides_seguros(gdf_plot)
-    
+
+    centroides = obtener_centroides_seguros(gdf_plot, epsg_proj=epsg_proj)
+
     for idx, row in gdf_plot.iterrows():
         if row["max_bancas"] > 0:
             centroide = centroides.iloc[idx]
@@ -170,7 +191,7 @@ def mapa_ganadores(gdf_secciones, bancas_totales_df, colores_partidos, titulo, a
     plt.close(fig)
     return fig
 
-def crear_parlamento(series, titulo, colores: Mapping[str, str]):
+def crear_parlamento(series, titulo, colores: Mapping[str, str]) -> Optional[Figure]:
     series = series[series > 0].sort_values(ascending=False)
     if series.empty:
         return None

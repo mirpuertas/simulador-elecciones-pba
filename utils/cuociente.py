@@ -58,4 +58,9 @@ def repartir_bancas(df: pd.DataFrame) -> pd.DataFrame:
 
         out.append(grupo[["seccion", "lista", "bancas"]])
 
-    return pd.concat(out, ignore_index=True)
+    # Concatenar resultados y ordenar
+    return (
+        pd.concat(out, ignore_index=True)        
+          .sort_values(["seccion", "lista"])      
+          .reset_index(drop=True)                
+    )

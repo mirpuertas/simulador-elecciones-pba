@@ -1,6 +1,6 @@
-from __future__ import annotations
 import pandas as pd
-from typing import Callable, Dict
+from typing import Dict
+from collections.abc import Callable
 from utils.cuociente import repartir_bancas
 
 __all__ = [
@@ -12,32 +12,48 @@ __all__ = [
 def _generar_filas_para_camara(
     secciones: Dict[str, int],
     padron_real: Dict[str, int],
-    creencias_seccion: Callable[[str], dict[str, int]],
+    creencias_seccion: Callable[[str], Dict[str, int]],
     participacion: float,
-    votos_validos: float
+    votos_validos_pct: float
 ) -> list[dict]:
     """
-    Genera las filas de datos para una cámara específica.
-    
-    Args:
-        secciones: Diccionario con sección -> cantidad de cargos
-        padron_real: Diccionario con sección -> cantidad de electores
-        creencias_seccion: Función que recibe una sección y devuelve dict alianza -> porcentaje
-        participacion: Porcentaje de participación (0.0 a 1.0)
-        votos_validos: Porcentaje de votos válidos (0.0 a 1.0)
-    
-    Returns:
-        Lista de diccionarios con los datos para repartir bancas
+    Genera las filas de datos que servirán de entrada a ``repartir_bancas``.
+
+    Parameters
+    ----------
+    secciones : dict[str, int]
+        Mapeo *sección → cantidad de cargos* que se ponen en juego
+        en la cámara correspondiente.
+    padron_real : dict[str, int]
+        Mapeo *sección → cantidad de electores* (padrón habilitado).
+    creencias_seccion : Callable[[str], dict[str, int]]
+        Función que, dado el nombre de la sección, devuelve las
+        creencias porcentuales ``alianza → %`` (0‒100) **ya filtradas**
+        para las alianzas que compiten allí.
+    participacion : float
+        Proporción de participación sobre el padrón habilitado
+        (valor entre 0 y 1).
+    votos_validos_pct : float
+        Proporción de votos válidos sobre los sufragios emitidos
+        (valor entre 0 y 1).
+
+    Returns
+    -------
+    list[dict]
+        Cada elemento tiene las claves:
+        ``{"seccion", "lista", "votos", "cargos"}``.
     """
     filas = []
     for seccion, cargos in secciones.items():
         pad = padron_real[seccion]
-        validos = int(pad * participacion * votos_validos)
+        validos = int(pad * participacion * votos_validos_pct)
         for alianza, pct in creencias_seccion(seccion).items():
             filas.append(
                 dict(seccion=seccion, lista=alianza,
                      votos=int(validos * pct / 100), cargos=cargos)
             )
+        if not filas:
+            filas.append(dict(seccion=seccion, lista="Ninguna", votos=0, cargos=cargos))
     return filas
 
 def _normalizar_creencias_para_seccion(
@@ -46,16 +62,25 @@ def _normalizar_creencias_para_seccion(
     secciones_x_alianza: Dict[str, set]
 ) -> Dict[str, float]:
     """
-    Normaliza las creencias a 100% para una sección específica,
-    descartando las alianzas que no compiten en esa sección.
-    
-    Args:
-        creencias: Diccionario alianza -> porcentaje de intención de voto
-        seccion: Nombre de la sección electoral
-        secciones_x_alianza: Diccionario alianza -> set de secciones donde compite
-    
-    Returns:
-        Diccionario normalizado alianza -> porcentaje (suma 100%)
+    Re‑escala las creencias para que sumen 100 % en la sección indicada.
+
+    Las alianzas que no compiten allí se descartan antes de normalizar.
+
+    Parameters
+    ----------
+    creencias : dict[str, int]
+        Intención de voto global «alianza → %» antes de filtrar por sección.
+    seccion : str
+        Sección electoral a la que se aplica el filtro.
+    secciones_x_alianza : dict[str, set[str]]
+        Mapeo «alianza → conjunto de secciones donde efectivamente compite».
+
+    Returns
+    -------
+    dict[str, float]
+        Intención de voto re‑normalizada (0‒100) sólo para las
+        alianzas válidas en la sección.  Devuelve un diccionario
+        vacío si ninguna alianza compite allí.
     """
     alianzas_validas = {
         a: pct for a, pct in creencias.items()
@@ -77,32 +102,40 @@ def calcular_determinista(
     votos_validos_pct: float
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Reparte bancas de forma determinista usando la misma creencia global para todas las secciones.
-    
-    Args:
-        creencias_global: Diccionario alianza -> porcentaje de intención de voto
-        secciones_diputados: Diccionario sección -> bancas de diputados a elegir
-        secciones_senadores: Diccionario sección -> bancas de senadores a elegir
-        padron_real: Diccionario sección -> cantidad de electores
-        secciones_x_alianza: Diccionario alianza -> set de secciones donde compite
-        participacion: Porcentaje de participación (0.0 a 1.0)
-        votos_validos_pct: Porcentaje de votos válidos (0.0 a 1.0)
-    
-    Returns:
-        Tupla con (DataFrame diputados, DataFrame senadores) con bancas asignadas
+    Asigna bancas suponiendo **una única** intención de voto para
+    todas las secciones.
+
+    Parameters
+    ----------
+    creencias_global : dict[str, int]
+        Intención de voto global «alianza → %».
+    secciones_diputados, secciones_senadores : dict[str, int]
+        Mapeo «sección → cargos a elegir» para cada cámara.
+    padron_real : dict[str, int]
+        Padrón habilitado por sección.
+    secciones_x_alianza : dict[str, set[str]]
+        Conjunto de secciones en las que compite cada alianza.
+    participacion : float
+        Proporción de participación (0‒1).
+    votos_validos_pct : float
+        Proporción de votos válidos (0‒1).
+
+    Returns
+    -------
+    (pandas.DataFrame, pandas.DataFrame)
+        DataFrames *diputados* y *senadores* con las columnas:
+        ``["seccion", "lista", "votos", "bancas"]``.
     """
-    
-    # Función que aplica la creencia global filtrada por sección
-    def creencias_func(seccion):
+    def _creencias_func(seccion):
         return _normalizar_creencias_para_seccion(
             creencias_global, seccion, secciones_x_alianza
         )
 
     filas_dip = _generar_filas_para_camara(
-        secciones_diputados, padron_real, creencias_func, participacion, votos_validos_pct
+        secciones_diputados, padron_real, _creencias_func, participacion, votos_validos_pct
     )
     filas_sen = _generar_filas_para_camara(
-        secciones_senadores, padron_real, creencias_func, participacion, votos_validos_pct
+        secciones_senadores, padron_real, _creencias_func, participacion, votos_validos_pct
     )
 
     dip = repartir_bancas(pd.DataFrame(filas_dip))
@@ -121,34 +154,45 @@ def calcular_determinista_por_seccion(
     votos_validos_pct: float
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Reparte bancas usando porcentajes distintos por sección.
-    
-    Args:
-        creencias_por_seccion: Diccionario con sección -> {alianza -> porcentaje}
-                              Debe incluir una clave "global" como fallback
-        secciones_diputados: Diccionario sección -> bancas de diputados a elegir
-        secciones_senadores: Diccionario sección -> bancas de senadores a elegir
-        padron_real: Diccionario sección -> cantidad de electores
-        secciones_x_alianza: Diccionario alianza -> set de secciones donde compite
-        participacion: Porcentaje de participación (0.0 a 1.0)
-        votos_validos_pct: Porcentaje de votos válidos (0.0 a 1.0)
-    
-    Returns:
-        Tupla con (DataFrame diputados, DataFrame senadores) con bancas asignadas
+    Asigna bancas permitiendo valores distintos de intención de voto
+    en cada sección.
+
+    Si una sección no está presente en ``creencias_por_seccion``,
+    se usa la clave ``"global"`` como valor por defecto.
+
+    Parameters
+    ----------
+    creencias_por_seccion : dict[str, dict[str, int]]
+        Mapeo «sección → (alianza → %)».  Debe incluir la clave
+        ``"global"``.
+    secciones_diputados, secciones_senadores : dict[str, int]
+        Mapeo «sección → cargos a elegir» para cada cámara.
+    padron_real : dict[str, int]
+        Padrón habilitado por sección.
+    secciones_x_alianza : dict[str, set[str]]
+        Conjunto de secciones en las que compite cada alianza.
+    participacion : float
+        Proporción de participación (0‒1).
+    votos_validos_pct : float
+        Proporción de votos válidos (0‒1).
+
+    Returns
+    -------
+    (pandas.DataFrame, pandas.DataFrame)
+        DataFrames *diputados* y *senadores* con las columnas:
+        ``["seccion", "lista", "votos", "bancas"]``.
     """
-    
-    # Función que aplica creencia específica si existe, o la global como fallback
-    def creencias_func(seccion):
+    def _creencias_func(seccion):
         base = creencias_por_seccion.get(seccion, creencias_por_seccion["global"])
         return _normalizar_creencias_para_seccion(
             base, seccion, secciones_x_alianza
         )
 
     filas_dip = _generar_filas_para_camara(
-        secciones_diputados, padron_real, creencias_func, participacion, votos_validos_pct
+        secciones_diputados, padron_real, _creencias_func, participacion, votos_validos_pct
     )
     filas_sen = _generar_filas_para_camara(
-        secciones_senadores, padron_real, creencias_func, participacion, votos_validos_pct
+        secciones_senadores, padron_real, _creencias_func, participacion, votos_validos_pct
     )
 
     dip = repartir_bancas(pd.DataFrame(filas_dip))
@@ -162,14 +206,20 @@ def agregar_bancas_no_renovadas(
     no_renuevan: Dict[str, Dict[str, int]]
 ) -> pd.Series:
     """
-    Suma las bancas que no se disputan a las bancas nuevas asignadas.
-    
-    Args:
-        nuevas: Series con alianza -> bancas nuevas asignadas
-        no_renuevan: Diccionario con sección -> {alianza -> bancas que no se renuevan}
-    
-    Returns:
-        Series con el total de bancas (nuevas + no renovadas)
+    Suma las bancas que no se disputan a las recién asignadas.
+
+    Parameters
+    ----------
+    nuevas : pandas.Series
+        Serie «alianza → bancas nuevas».
+    no_renuevan : dict[str, dict[str, int]]
+        Mapeo «sección → (alianza → bancas que no concluyen mandato)».
+
+    Returns
+    -------
+    pandas.Series
+        Banca total por alianza (*nuevas + no renovadas*),
+        siempre de tipo ``int``.
     """
     total = nuevas.copy()
     for _, dic in no_renuevan.items():
