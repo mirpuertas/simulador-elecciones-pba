@@ -1,7 +1,7 @@
 {
     "alianzas": {
         "Alianza La Libertad Avanza": {
-            "color": "#4B0082",
+            "color": "#39317a",
             "partidos": [
                 "PRO",
                 "LLA"
@@ -9,14 +9,14 @@
             "secciones": "Todas"
         },
         "Alianza Fuerza Patria": {
-            "color": "#202CB3DD",
+            "color": "#32b9f5",
             "partidos": [
                 "UxP"
             ],
             "secciones": "Todas"
         },
         "Alianza Somos Buenos Aires": {
-            "color": "#C90000E3",
+            "color": "#fe98c5",
             "partidos": [
                 "UCR",
                 "Coalición cívica",
@@ -26,43 +26,43 @@
             "secciones": "Capital, Primera, Tercera, Cuarta, Quinta, Sexta, Séptima"
         },
         "Unión renovación y fe": {
-            "color": "#5D077A",
+            "color": "#970bb0",
             "partidos": [
                 "Unión renovación y fe"
             ],
             "secciones": null
         },
         "Alianza Unión y Libertad": {
-            "color": "#6A0DAD",
+            "color": "#73288b",
             "partidos": [
                 "UNIÓN Y LIBERTAD"
             ],
             "secciones": "Todas"
         },
         "Alianza FIT-U": {
-            "color": "#FF0000",
+            "color": "#e7413d",
             "partidos": [
                 "PTS-Frente de Izquierda Unidad"
             ],
             "secciones": "Todas"
         },
         "Alianza Unión Liberal": {
-            "color": "#8A2BE2",
+            "color": "#071ec2",
             "partidos": [],
             "secciones": "Todas"
         },
         "Alianza es con Vos es con Nosotros": {
-            "color": "#202a96dd",
+            "color": "#095486",
             "partidos": [],
             "secciones": "Todas"
         },
         "Alianza Nuevos Aires": {
-            "color": "#5d077af4",
+            "color": "#a6daf5",
             "partidos": [],
             "secciones": "Capital, Primera, Tercera, Cuarta"
         },
         "Alianza Potencia": {
-            "color": "#ffff00dd",
+            "color": "#8e1f2f",
             "partidos": [],
             "secciones": "Todas"
         },
@@ -77,32 +77,32 @@
             "secciones": "Capital, Segunda"
         },
         "Partido del Trabajo y la Equidad": {
-            "color": "#FF4500",
+            "color": "#4b8fcc",
             "partidos": [],
             "secciones": "Todas"
         },
         "Partido Frente Patriota Federal": {
-            "color": "#FF6347",
+            "color": "#002d57",
             "partidos": [],
             "secciones": "Todas"
         },
         "Partido Libertario": {
-            "color": "#FFD700",
+            "color": "#dd27d2",
             "partidos": [],
             "secciones": "Todas"
         },
         "Partido Movimiento Avanzada Socialista": {
-            "color": "#32CD32",
+            "color": "#c4230c",
             "partidos": [],
             "secciones": "Todas"
         },
         "Partido Política Obrera": {
-            "color": "#000000",
+            "color": "#f15526",
             "partidos": [],
             "secciones": "Capital, Primera, Segunda, Tercera, Cuarta, Quinta, Sexta"
         },
         "Partido Tiempo de Todos": {
-            "color": "#8B0000",
+            "color": "#00788b",
             "partidos": [],
             "secciones": "Todas"
         },
